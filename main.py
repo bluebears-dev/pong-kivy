@@ -2,14 +2,47 @@ import kivy
 kivy.require('1.9.1') # replace with your current kivy version !
 
 from kivy.app import App
-from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty
+from kivy.vector import Vector
+from kivy.clock import Clock
+from random import randint
 
+class PongBall(Widget):
+    # velocity on x and y axis
+    velocity_x = NumericProperty(0)
+    velocity_y = NumericProperty(0)
 
-class MyApp(App):
+    # shorthand for getting velocity on both axis
+    velocity = ReferenceListProperty(velocity_x, velocity_y)
 
+    def move(self):
+        self.pos = Vector(*self.velocity) + self.pos
+
+class PongGame(Widget):
+    ball = ObjectProperty(None)
+
+    def serve_ball(self):
+        self.ball.center = self.center
+        self.ball.velocity = Vector(10, 0).rotate(randint(0, 360))
+
+    def update(self, dt):
+        self.ball.move()
+
+        # bounce on x axis
+        if (self.ball.y < 0) or (self.ball.top > self.height):
+            self.ball.velocity_y *= -1
+
+        # bounce on y axis
+        if (self.ball.x < 0) or (self.ball.right > self.width):
+            self.ball.velocity_x *= -1
+
+class PongApp(App):
     def build(self):
-        return Label(text='Hello world')
-
+        game = PongGame()
+        game.serve_ball()
+        Clock.schedule_interval(game.update, 1.0 / 60.0)
+        return game
 
 if __name__ == '__main__':
-    MyApp().run()
+    PongApp().run()
